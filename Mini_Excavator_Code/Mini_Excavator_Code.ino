@@ -56,6 +56,19 @@ bool button_a = false;
 bool button_b = false;
 bool button_x = false;
 bool button_y = false;
+int axisX_prev = 0;
+int axisY_prev = 0;
+int axisRX_prev = 0;
+int axisRY_prev = 0;
+int axisX_current = 0;
+int axisY_current = 0;
+int axisRX_current = 0;
+int axisRY_current = 0;
+bool stick_L_moving = false;
+bool stick_R_moving = false;
+
+//adding this to help with accidental movemet on the joysticks
+int threshold = 250;
 
 
 
@@ -254,18 +267,32 @@ void processGamepad(ControllerPtr ctl) {
     }
 
   //---------------- Analog stick value events ---------------
+  axisX_prev = axisX_current;
+  axisY_prev = axisY_current;
+  axisRX_prev = axisRX_current;
+  axisRY_prev = axisRY_current;
+  axisX_current = ctl->axisX();
+  axisY_current = ctl->axisY();
+  axisRX_current = ctl->axisRX();
+  axisRY_current = ctl->axisRY();
+
+  //bool stick_L_moving = false;
+  //bool stick_R_moving = false;
+  if(axisX_current != axisX_prev && abs(axisX_current)-abs(axisX_prev) > 2){
+    stick_L_moving = true;
+  }
+  else stick_L_moving = false;
+
+
   //left stick - left and right controls pivot left and right
-    if(abs(ctl->axisX()) > 115){ // start pivoting either direction
-      int LXValue = ctl->axisX();
-      Serial.print("LXValue =");
-      Serial.print(LXValue);
-      if (LXValue > 115) {
+    if(abs(axisX_current) > threshold){ // start pivoting either direction
+      if (axisX_current > threshold) {
         mcp.digitalWrite(pivot0, HIGH);
         mcp.digitalWrite(pivot1, LOW);
         delay(10);
         Serial.println("Made to into Positive");
       }
-      if (LXValue < -115) {
+      if (axisX_current < (threshold * -1)) {
         mcp.digitalWrite(pivot0, LOW);
         mcp.digitalWrite(pivot1, HIGH);
         delay(10);
@@ -276,17 +303,16 @@ void processGamepad(ControllerPtr ctl) {
       mcp.digitalWrite(pivot0, LOW);
       mcp.digitalWrite(pivot1, LOW);
       delay(10);
-      Serial.println("stop pivot");
+      // Serial.println("stop pivot");
     }
     //move "second" boom
-    if(abs(ctl->axisY()) > 115){ // start pivoting either direction
-      int LYValue = ctl->axisY();
-      if (LYValue > 115) {
+    if(abs(axisY_current) > threshold){ // start pivoting either direction
+      if (axisY_current > threshold) {
         mcp.digitalWrite(secondBoom0, HIGH);
         mcp.digitalWrite(secondBoom1, LOW);
         delay(10);
       }
-      if (LYValue < -115) {
+      if (axisY_current < (threshold * -1)) {
         mcp.digitalWrite(secondBoom0, LOW);
         mcp.digitalWrite(secondBoom1, HIGH);
         delay(10);
@@ -295,15 +321,73 @@ void processGamepad(ControllerPtr ctl) {
     else {
         mcp.digitalWrite(secondBoom0, LOW);
         mcp.digitalWrite(secondBoom1, LOW);
-        Serial.println("stop boom");
+        // Serial.println("stop boom");
     }
     
   //right stick
   //x axis controls tiltAttach
   //y axis controls mainBoom 
+    if(abs(axisRX_current) > threshold){ // start tilt bucket either direction
+      if (axisRX_current > threshold) {
+        mcp.digitalWrite(tiltAttach0, HIGH);
+        mcp.digitalWrite(tiltAttach1, LOW);
+        delay(10);
+        Serial.print("Move bucket positive");
+      }
+      if (axisRX_current < (threshold * -1)) {
+        mcp.digitalWrite(tiltAttach0, LOW);
+        mcp.digitalWrite(tiltAttach1, HIGH);
+        delay(10);
+        Serial.print("Move bucket negative");
+      }
+    }
+    else{ //stop tilt bucket
+      mcp.digitalWrite(tiltAttach0, LOW);
+      mcp.digitalWrite(tiltAttach1, LOW);
+    }
+    if(abs(axisRY_current) > threshold){ //start move boom
+      if (axisRY_current > threshold) {
+        mcp.digitalWrite(mainBoom0, HIGH);
+        mcp.digitalWrite(mainBoom1, LOW);
+        delay(10);
+      }
+      if (axisRY_current < (threshold * -1)) { //start move boom other way
+        mcp.digitalWrite(mainBoom0, LOW);
+        mcp.digitalWrite(mainBoom1, HIGH);
+        delay(10);
+      }
+    }
+    else{ //stop moving boom
+        mcp.digitalWrite(mainBoom0, LOW);
+        mcp.digitalWrite(mainBoom1, LOW);
+    }
 
-  } //end processGamepad()
-
+   
+  //--------------- Digital D-pad button events --------------
+  if (ctl->dpad() == 1) {
+    dpad_up = true;
+    mcp.digitalWrite(thumb0, HIGH);
+    mcp.digitalWrite(thumb1, LOW);
+    Serial.println("Started pressing the up button");
+  }
+  if (dpad_up && ctl->dpad() != 1) {
+    dpad_up = false;
+    mcp.digitalWrite(thumb0, LOW);
+    mcp.digitalWrite(thumb1, LOW);
+    Serial.println("Released the up button");
+  }
+  if (ctl->dpad() == 2) {
+    dpad_down = true;
+    Serial.println("Started pressing the down button");
+    mcp.digitalWrite(thumb0, LOW);
+    mcp.digitalWrite(thumb1, HIGH);
+  }
+  if (dpad_down && ctl->dpad() != 2) {
+    dpad_down = false;
+    Serial.println("Released the down button");
+    mcp.digitalWrite(thumb0, LOW);
+    mcp.digitalWrite(thumb1, LOW);
+  }
 
 
 
@@ -312,7 +396,8 @@ void processGamepad(ControllerPtr ctl) {
     // Another way to query controller data is by getting the buttons() function.
     // See how the different "dump*" functions dump the Controller info.
     // dumpGamepad(ctl);
-}
+} //end processGamepad()
+
 
 void processMouse(ControllerPtr ctl) {
     // This is just an example.
