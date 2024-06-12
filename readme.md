@@ -1,1 +1,5 @@
 This fork is to replace the PS3 controller library with the bluepad32 library. I am omitting the ESPServo library because I don't know how to integrate it into the bluepad32 board in the Arduino IDE. I'm not using any servos so this does not really affect me. If you're now reading this, this is a WIP! I have only integrated pivot and the two tracks into the controller, but I'm working on building the rest of the excavator to test the boom.
+
+**Mini_Excavator_Code** is ProfBoot's original, forked to use Bluepad32. Get that started here https://github.com/ricardoquesada/bluepad32. I used the Arduino IDE's example "Controller" code to help write this. You'll find a lot of that code still in the sketch.
+
+**Excavtor_Code_Joystick_Controls** is the same code, sort of, but moves the controls of the tracks to the left joystick. The triggers are the boom and the right joystick is either pivoting left and right or the bucket control. I made this mostly for my toddler to drive the excavator around easier.
