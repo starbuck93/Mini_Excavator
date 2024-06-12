@@ -81,6 +81,8 @@ void onConnectedController(ControllerPtr ctl) {
     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
         if (myControllers[i] == nullptr) {
             Serial.printf("CALLBACK: Controller is connected, index=%d\n", i);
+            cabLightsOn = true; //to signal a controller is ready
+            digitalWrite(cabLights, HIGH);
             // Additionally, you can get certain gamepad properties like:
             // Model, VID, PID, BTAddr, flags, etc.
             ControllerProperties properties = ctl->getProperties();
@@ -388,9 +390,18 @@ void processGamepad(ControllerPtr ctl) {
     mcp.digitalWrite(thumb0, LOW);
     mcp.digitalWrite(thumb1, LOW);
   }
-
-
-
+  //--------------- Digital stick button events --------------
+  //cab lights
+  if (ctl->thumbL()) {
+    if (!cabLightsOn) {
+      digitalWrite(cabLights, HIGH);
+      cabLightsOn = true;
+    } else {
+      digitalWrite(cabLights, LOW);
+      cabLightsOn = false;
+    }
+    Serial.println("Click left stick button");
+  }
 
 
     // Another way to query controller data is by getting the buttons() function.
